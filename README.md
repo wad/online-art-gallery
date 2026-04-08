@@ -89,7 +89,6 @@ cat /path/to/backups/oag-20260407.sql | docker exec -i oag-db psql -U oag oag
 | `OAG_DB_NAME` | Yes | `oag` | Database name |
 | `OAG_DB_USERNAME` | Yes | `oag` | Database user |
 | `OAG_DB_PASSWORD` | Yes | | Database password |
-| `OAG_ADMIN_PASSWORD` | Yes (first run) | | Initial admin password (bcrypt-hashed and stored on first startup) |
 | `OAG_JWT_SECRET` | Yes | | Secret key for signing JWT tokens (use a long random string) |
 | `OAG_SITE_DOMAIN` | Yes | | The public domain of the site (e.g., `https://example.com`). Used to generate shareable image links. |
 | `OAG_ADSENSE_PUBLISHER_ID` | No | | Google AdSense publisher ID (`ca-pub-XXXXX`). If not set, all ad functionality is disabled. |
@@ -199,7 +198,6 @@ This is the recommended setup for a small-to-medium site.
    OAG_DB_NAME=oag
    OAG_DB_USERNAME=oag
    OAG_DB_PASSWORD=your-secure-db-password
-   OAG_ADMIN_PASSWORD=your-admin-password
    OAG_JWT_SECRET=your-long-random-secret-string
    OAG_SITE_DOMAIN=https://example.com
    # Optional:
@@ -218,7 +216,7 @@ This is the recommended setup for a small-to-medium site.
 5. **Verify:**
    - Visit your domain — you should see the landing page
    - Visit `/admin` — you should see the login page
-   - Log in with your admin password
+   - Log in with the default admin password (see below)
 
 ### Updating
 
@@ -242,15 +240,35 @@ Liquibase will automatically apply any new database migrations on startup.
 ### First Login
 
 1. Navigate to `/admin`
-2. Enter the admin password (set via `OAG_ADMIN_PASSWORD` on first startup)
+2. Log in with the default password: **`WorstPassword666!`**
+3. **Change the password immediately** — go to the password change page (accessible from the admin navigation bar) and set a secure password. Passwords must be at least 8 characters long.
+
+### Changing the Admin Password
+
+1. Click the password/account link in the admin navigation bar
+2. Enter your current password
+3. Enter and confirm your new password (minimum 8 characters)
+4. Click "Change Password"
+
+If you forget your password, you will need to reset it directly in the database by updating the `password_hash` column in the `admin_config` table with a new bcrypt hash.
 
 ### Setting Up a Gallery
 
-1. **Add images** — Go to image management and either add images one at a time (by URL) or use bulk load to add many at once. Fill in metadata (title, artist, description, etc.) afterward. Each image is automatically assigned a permanent eight-digit short ID (e.g., `00004719`). There is also an "Admin notes" field visible only to admins — use it for internal notes that visitors should not see.
-2. **Create a gallery** — Give it a name, a unique gallery code (1–5 characters, starting with a capital letter, e.g., `MAIN`, `FF25`), a description, choose a theme, and optionally customize the image border style. Use the live preview to see how it will look. Thumbnails (100x100px max) are automatically generated when images are added to the system.
-3. **Set visibility** — By default, galleries are visible to all visitors. Uncheck "Visible to visitors" to hide a gallery from the galleries listing page. Visitors can still access it via direct URL if they know the gallery code. This is useful for testing a new gallery before making it public.
-4. **Create tours** — Within your gallery, create tours. Each tour is an ordered set of images with a name and a headliner image.
-5. **Set the default gallery** — Mark one gallery as the default. When visitors arrive at the site root, they are redirected to this gallery's page (e.g., `https://example.com/MAIN`).
+1. **Add images** — Go to image management and either add images one at a time (by URL) or use bulk load to add many at once. The admin image list is paginated and shows thumbnails, making it easy to browse your collection. Fill in metadata (title, artist, description, etc.) afterward — you can also use bulk metadata editing to update multiple images at once. Each image is automatically assigned a permanent eight-digit short ID (e.g., `00004719`). There is also an "Admin notes" field visible only to admins — use it for internal notes that visitors should not see.
+2. **Create a gallery** — Give it a name, a unique gallery code (1-5 characters, starting with a capital letter, e.g., `MAIN`, `FF25`), a description, choose a theme, and optionally customize the image border style. Use the live preview to see how it will look. Thumbnails (100x100px max) are automatically generated when images are added to the system.
+3. **Add images to the gallery** — In the gallery editor, use the image management panel to add images from the global pool to this gallery. An image can belong to multiple galleries. Tours within the gallery will only see images that have been added to it.
+4. **Set visibility** — By default, galleries are visible to all visitors. Uncheck "Visible to visitors" to hide a gallery from the galleries listing page. Visitors can still access it via direct URL if they know the gallery code. This is useful for testing a new gallery before making it public.
+5. **Create tours** — Within your gallery, create tours. Each tour has a name, optional description, a headliner image, and an ordered set of images drawn from the gallery. You can optionally associate tags with a tour to auto-populate it with matching images.
+6. **Set the default gallery** — Mark one gallery as the default. When visitors arrive at the site root, they are redirected to this gallery's page (e.g., `https://example.com/MAIN`).
+7. **Reorder galleries and tours** — Drag and drop galleries and tours to set their display order. This controls the order visitors see on the galleries page and on each gallery's landing page.
+
+### Managing Images
+
+- **Search and filter** — Use the search bar to find images by title, artist, or description. Filter by tag or NSFW status. Sort by title, artist name, or upload date.
+- **Update image URL** — If an image moves to a new hosting location, edit the image and update its URL. The thumbnail will be automatically regenerated.
+- **Regenerate thumbnails** — Use the "Regenerate thumbnail" button on any image's edit page, or use "Regenerate all thumbnails" from the image list toolbar.
+- **Check image usage** — Each image's edit page shows which galleries and tours reference it, helping you understand the impact before making changes.
+- **Export/import galleries** — Export a gallery's configuration (tours, image references, settings) as a JSON file. Import it on another instance or as a template for a new gallery.
 
 ### Shareable Image Links
 

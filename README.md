@@ -312,3 +312,5 @@ When the application is running, OpenAPI documentation is available at:
 
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
 - OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+
+All API endpoints are versioned under `/api/v1/`. See `CLAUDE.md` for API conventions.

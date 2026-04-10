@@ -1,0 +1,43 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${OAG_DB_HOST:localhost}:${OAG_DB_PORT:5432}/${OAG_DB_NAME:oag}
+    username: ${OAG_DB_USERNAME:oag}
+    password: ${OAG_DB_PASSWORD:oag}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    open-in-view: false
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumWeight=104857600,expireAfterAccess=10m  # 100MB max, 10-minute idle expiry
+  mvc:
+    problemdetails:
+      enabled: true
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+oag:
+  site-domain: ${OAG_SITE_DOMAIN:http://localhost:8080}
+  adsense:
+    publisher-id: ${OAG_ADSENSE_PUBLISHER_ID:}
+  jwt:
+    secret: ${OAG_JWT_SECRET:dev-secret-change-in-production-minimum-256-bits-long}
+    expiration-hours: 24
+  rate-limit:
+    views-per-minute: 60
+
+logging:
+  level:
+    org.wadhome.oag: INFO
+    org.springframework.security: WARN

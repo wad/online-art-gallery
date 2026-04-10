@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <!-- 2.2: image table -->
+    <changeSet id="2.2-image" author="oag">
+        <createTable tableName="image">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="public_id" type="uuid">
+                <constraints unique="true" nullable="false"/>
+            </column>
+            <!-- short_id is varchar(8) so H2 can index it; PostgreSQL treats varchar as text -->
+            <column name="short_id" type="varchar(8)">
+                <constraints unique="true" nullable="false"/>
+            </column>
+            <column name="url" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="title" type="text"/>
+            <column name="artist_name" type="text"/>
+            <column name="description" type="text"/>
+            <column name="art_creation_date" type="text"/>
+            <column name="artist_comments" type="text"/>
+            <column name="notes" type="text"/>
+            <column name="admin_notes" type="text"/>
+            <column name="nsfw" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="uploaded_at" type="timestamptz" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="base_image_id" type="bigint"/>
+        </createTable>
+        <addForeignKeyConstraint
+            baseTableName="image" baseColumnNames="base_image_id"
+            referencedTableName="image" referencedColumnNames="id"
+            constraintName="fk_image_base_image"/>
+    </changeSet>
+
+    <!-- 2.3: tag table -->
+    <changeSet id="2.3-tag" author="oag">
+        <createTable tableName="tag">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="public_id" type="uuid">
+                <constraints unique="true" nullable="false"/>
+            </column>
+            <!-- tag name is varchar(255) so H2 can enforce uniqueness -->
+            <column name="name" type="varchar(255)">
+                <constraints unique="true" nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <!-- 2.4: image_tag join table -->
+    <changeSet id="2.4-image-tag" author="oag">
+        <createTable tableName="image_tag">
+            <column name="image_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tag_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="image_tag" columnNames="image_id,tag_id" constraintName="pk_image_tag"/>
+        <addForeignKeyConstraint
+            baseTableName="image_tag" baseColumnNames="image_id"
+            referencedTableName="image" referencedColumnNames="id"
+            constraintName="fk_image_tag_image" onDelete="CASCADE"/>
+        <addForeignKeyConstraint
+            baseTableName="image_tag" baseColumnNames="tag_id"
+            referencedTableName="tag" referencedColumnNames="id"
+            constraintName="fk_image_tag_tag" onDelete="CASCADE"/>
+    </changeSet>
+
+    <!-- 2.5: gallery table -->
+    <changeSet id="2.5-gallery" author="oag">
+        <createTable tableName="gallery">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="public_id" type="uuid">
+                <constraints unique="true" nullable="false"/>
+            </column>
+            <!-- code is varchar(5) per domain rule: ^[A-Z][A-Z0-9]{0,4}$ -->
+            <column name="code" type="varchar(5)">
+                <constraints unique="true" nullable="false"/>
+            </column>
+            <column name="name" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="subtitle" type="text"/>
+            <column name="description" type="text"/>
+            <column name="headliner_image_id" type="bigint"/>
+            <column name="is_default" type="boolean" defaultValueBoolean="false"/>
+            <column name="visible" type="boolean" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="show_all_images_tour" type="boolean" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sort_order" type="int" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bio_photo_url" type="text"/>
+            <column name="bio_text" type="text"/>
+            <column name="theme" type="varchar(50)" defaultValue="LIGHT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="border_style" type="varchar(50)"/>
+        </createTable>
+        <addForeignKeyConstraint
+            baseTableName="gallery" baseColumnNames="headliner_image_id"
+            referencedTableName="image" referencedColumnNames="id"
+            constraintName="fk_gallery_headliner"/>
+    </changeSet>
+
+    <!-- 2.5a: ad settings columns on gallery -->
+    <changeSet id="2.5a-gallery-ads" author="oag">
+        <addColumn tableName="gallery">
+            <column name="ads_enabled" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ad_landing_banner" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ad_landing_banner_slot" type="text"/>
+            <column name="ad_image_detail_sidebar" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ad_image_detail_sidebar_slot" type="text"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- 2.5b: gallery_bio_link table -->
+    <changeSet id="2.5b-gallery-bio-link" author="oag">
+        <createTable tableName="gallery_bio_link">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="gallery_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="label" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="url" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sort_order" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint
+            baseTableName="gallery_bio_link" baseColumnNames="gallery_id"
+            referencedTableName="gallery" referencedColumnNames="id"
+            constraintName="fk_gallery_bio_link_gallery" onDelete="CASCADE"/>
+    </changeSet>
+
+    <!-- 2.5c: gallery_image join table -->
+    <changeSet id="2.5c-gallery-image" author="oag">
+        <createTable tableName="gallery_image">
+            <column name="gallery_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="image_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="gallery_image" columnNames="gallery_id,image_id" constraintName="pk_gallery_image"/>
+        <addForeignKeyConstraint
+            baseTableName="gallery_image" baseColumnNames="gallery_id"
+            referencedTableName="gallery" referencedColumnNames="id"
+            constraintName="fk_gallery_image_gallery" onDelete="CASCADE"/>
+        <addForeignKeyConstraint
+            baseTableName="gallery_image" baseColumnNames="image_id"
+            referencedTableName="image" referencedColumnNames="id"
+            constraintName="fk_gallery_image_image" onDelete="CASCADE"/>
+    </changeSet>
+
+    <!-- 2.6: tour table -->
+    <changeSet id="2.6-tour" author="oag">
+        <createTable tableName="tour">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="public_id" type="uuid">
+                <constraints unique="true" nullable="false"/>
+            </column>
+            <column name="name" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="text"/>
+            <column name="gallery_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="headliner_image_id" type="bigint"/>
+            <column name="sort_order" type="int" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint
+            baseTableName="tour" baseColumnNames="gallery_id"
+            referencedTableName="gallery" referencedColumnNames="id"
+            constraintName="fk_tour_gallery" onDelete="CASCADE"/>
+        <addForeignKeyConstraint
+            baseTableName="tour" baseColumnNames="headliner_image_id"
+            referencedTableName="image" referencedColumnNames="id"
+            constraintName="fk_tour_headliner"/>
+    </changeSet>
+
+    <!-- 2.7: tour_image join table -->
+    <changeSet id="2.7-tour-image" author="oag">
+        <createTable tableName="tour_image">
+            <column name="tour_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="image_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sort_order" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="tour_image" columnNames="tour_id,image_id" constraintName="pk_tour_image"/>
+        <addForeignKeyConstraint
+            baseTableName="tour_image" baseColumnNames="tour_id"
+            referencedTableName="tour" referencedColumnNames="id"
+            constraintName="fk_tour_image_tour" onDelete="CASCADE"/>
+        <addForeignKeyConstraint
+            baseTableName="tour_image" baseColumnNames="image_id"
+            referencedTableName="image" referencedColumnNames="id"
+            constraintName="fk_tour_image_image" onDelete="CASCADE"/>
+    </changeSet>
+
+    <!-- 2.7a: tour_tag join table -->
+    <changeSet id="2.7a-tour-tag" author="oag">
+        <createTable tableName="tour_tag">
+            <column name="tour_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tag_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="tour_tag" columnNames="tour_id,tag_id" constraintName="pk_tour_tag"/>
+        <addForeignKeyConstraint
+            baseTableName="tour_tag" baseColumnNames="tour_id"
+            referencedTableName="tour" referencedColumnNames="id"
+            constraintName="fk_tour_tag_tour" onDelete="CASCADE"/>
+        <addForeignKeyConstraint
+            baseTableName="tour_tag" baseColumnNames="tag_id"
+            referencedTableName="tag" referencedColumnNames="id"
+            constraintName="fk_tour_tag_tag" onDelete="CASCADE"/>
+    </changeSet>
+
+    <!-- 2.8: thumbnail table -->
+    <changeSet id="2.8-thumbnail" author="oag">
+        <createTable tableName="thumbnail">
+            <column name="image_id" type="bigint">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="data" type="bytea">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint
+            baseTableName="thumbnail" baseColumnNames="image_id"
+            referencedTableName="image" referencedColumnNames="id"
+            constraintName="fk_thumbnail_image" onDelete="CASCADE"/>
+    </changeSet>
+
+    <!-- 2.8a: image_redirect table -->
+    <changeSet id="2.8a-image-redirect" author="oag">
+        <createTable tableName="image_redirect">
+            <column name="old_short_id" type="varchar(8)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="new_short_id" type="varchar(8)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <!-- 2.8b: page_view_daily table (no FK on entity_id) -->
+    <changeSet id="2.8b-page-view-daily" author="oag">
+        <createTable tableName="page_view_daily">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="view_date" type="date">
+                <constraints nullable="false"/>
+            </column>
+            <column name="entity_type" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="entity_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="context" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="view_count" type="int" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint
+            tableName="page_view_daily"
+            columnNames="view_date,entity_type,entity_id,context"
+            constraintName="uq_page_view_daily"/>
+        <createIndex tableName="page_view_daily" indexName="idx_page_view_daily_entity">
+            <column name="entity_type"/>
+            <column name="entity_id"/>
+            <column name="view_date"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- 2.8c: async_job table -->
+    <changeSet id="2.8c-async-job" author="oag">
+        <createTable tableName="async_job">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="type" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_items" type="int"/>
+            <column name="processed_items" type="int" defaultValueNumeric="0"/>
+            <column name="failed_items" type="int" defaultValueNumeric="0"/>
+            <column name="error_messages" type="text"/>
+            <column name="started_at" type="timestamptz">
+                <constraints nullable="false"/>
+            </column>
+            <column name="completed_at" type="timestamptz"/>
+        </createTable>
+    </changeSet>
+
+    <!-- 2.9: admin_config table -->
+    <changeSet id="2.9-admin-config" author="oag">
+        <createTable tableName="admin_config">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="password_hash" type="text">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <!-- 2.10: indexes -->
+    <changeSet id="2.10-indexes" author="oag">
+        <createIndex tableName="image" indexName="idx_image_public_id" unique="true">
+            <column name="public_id"/>
+        </createIndex>
+        <createIndex tableName="image" indexName="idx_image_short_id" unique="true">
+            <column name="short_id"/>
+        </createIndex>
+        <createIndex tableName="gallery" indexName="idx_gallery_public_id" unique="true">
+            <column name="public_id"/>
+        </createIndex>
+        <createIndex tableName="gallery" indexName="idx_gallery_code" unique="true">
+            <column name="code"/>
+        </createIndex>
+        <createIndex tableName="gallery" indexName="idx_gallery_is_default">
+            <column name="is_default"/>
+        </createIndex>
+        <createIndex tableName="gallery" indexName="idx_gallery_sort_order">
+            <column name="sort_order"/>
+        </createIndex>
+        <createIndex tableName="tour" indexName="idx_tour_public_id" unique="true">
+            <column name="public_id"/>
+        </createIndex>
+        <createIndex tableName="tour" indexName="idx_tour_sort_order">
+            <column name="sort_order"/>
+        </createIndex>
+    </changeSet>
+
+
+</databaseChangeLog>

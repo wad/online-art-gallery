@@ -8,16 +8,16 @@ This plan breaks the project into phases, each producing a buildable/testable mi
 
 Set up the Maven multi-module project structure so that `mvn package` produces a single JAR.
 
-- [ ] **1.1** Create parent `pom.xml` (multi-module: `backend`, `frontend`)
-- [ ] **1.2** Create `backend/pom.xml` with Spring Boot 3, Java 21, springdoc-openapi, JJWT, MapStruct, Liquibase, PostgreSQL driver, H2 (test), JaCoCo, Bucket4j (rate limiting), Caffeine (caching)
-- [ ] **1.3** Create `frontend/pom.xml` with `frontend-maven-plugin` (install Node/npm, run `npm install`, run `npm run build`), copy build output to `backend/src/main/resources/static`
-- [ ] **1.4** Scaffold React + TypeScript + Vite app in `frontend/`
-- [ ] **1.4a** Bundle sample artwork: ~6-8 public domain paintings (optimized/resized) in `frontend/src/assets/sample-artwork/`. Source from Met Open Access or similar. Used for admin theme preview and e2e test fixtures.
-- [ ] **1.5** Create `backend/src/main/java/org/wadhome/oag/OagApplication.java` (Spring Boot main class)
-- [ ] **1.6** Create `application.yml` with datasource config using env vars, JVM settings, `oag.site-domain` (from `OAG_SITE_DOMAIN`), `oag.adsense.publisher-id` (from `OAG_ADSENSE_PUBLISHER_ID` env var, optional)
-- [ ] **1.7** Create `docker-compose.yml` (PostgreSQL 16 container + app container, `-Xmx512m`)
-- [ ] **1.8** Create `.gitignore` for Java/Maven/Node/React artifacts
-- [ ] **1.9** Verify: `mvn clean package` succeeds, app starts, serves Vite placeholder page
+- [x] **1.1** Create parent `pom.xml` (multi-module: `backend`, `frontend`)
+- [x] **1.2** Create `backend/pom.xml` with Spring Boot 3, Java 21, springdoc-openapi, JJWT, MapStruct, Liquibase, PostgreSQL driver, H2 (test), JaCoCo, Bucket4j (rate limiting), Caffeine (caching)
+- [x] **1.3** Create `frontend/pom.xml` with `frontend-maven-plugin` (install Node/npm, run `npm install`, run `npm run build`), copy build output to `backend/src/main/resources/static`
+- [x] **1.4** Scaffold React + TypeScript + Vite app in `frontend/`
+- [x] **1.4a** Bundle sample artwork: ~6-8 public domain paintings (optimized/resized) in `frontend/src/assets/sample-artwork/`. Source from Met Open Access or similar. Used for admin theme preview and e2e test fixtures.
+- [x] **1.5** Create `backend/src/main/java/org/wadhome/oag/OagApplication.java` (Spring Boot main class)
+- [x] **1.6** Create `application.yml` with datasource config using env vars, JVM settings, `oag.site-domain` (from `OAG_SITE_DOMAIN`), `oag.adsense.publisher-id` (from `OAG_ADSENSE_PUBLISHER_ID` env var, optional)
+- [x] **1.7** Create `docker-compose.yml` (PostgreSQL 16 container + app container, `-Xmx512m`)
+- [x] **1.8** Create `.gitignore` for Java/Maven/Node/React artifacts
+- [x] **1.9** Verify: `mvn clean package` succeeds, app starts, serves Vite placeholder page
 
 **Milestone**: Clean build producing a runnable JAR that serves a blank React page.
 
@@ -27,24 +27,24 @@ Set up the Maven multi-module project structure so that `mvn package` produces a
 
 Define all tables via Liquibase XML changesets. No application code yet — just the schema.
 
-- [ ] **2.1** Create Liquibase master changelog (`db/changelog/db.changelog-master.xml`)
-- [ ] **2.2** Changeset: `image` table — `id` (bigserial PK), `public_id` (UUID, unique, not null), `short_id` (text, unique, not null — randomly generated zero-padded 8-digit number, e.g. "00004719", immutable after creation), `url` (text, not null), `title` (text), `artist_name` (text), `description` (text), `art_creation_date` (text, nullable — freeform: "1975", "1972-1974", etc.), `artist_comments` (text, nullable), `notes` (text, nullable), `admin_notes` (text, nullable — visible only in admin panel, never exposed to visitors), `nsfw` (boolean, not null, default false), `uploaded_at` (timestamptz, not null, default `now()` — auto-set on creation, admin-only), `base_image_id` (bigint FK self-ref, nullable)
-- [ ] **2.3** Changeset: `tag` table — `id` (bigserial PK), `public_id` (UUID, unique), `name` (text, unique, not null)
-- [ ] **2.4** Changeset: `image_tag` join table — `image_id` (FK), `tag_id` (FK), composite PK
-- [ ] **2.5** Changeset: `gallery` table — `id` (bigserial PK), `public_id` (UUID, unique), `code` (text, unique, not null — 1-5 chars, regex `^[A-Z][A-Z0-9]{0,4}$`), `name` (text, not null), `subtitle` (text, nullable — e.g., artist name), `description` (text), `headliner_image_id` (bigint FK to image, nullable), `is_default` (boolean, default false), `visible` (boolean, not null, default true), `show_all_images_tour` (boolean, not null, default true), `sort_order` (int, not null, default 0), `bio_photo_url` (text, nullable — URL of artist photo), `bio_text` (text, nullable — biographical paragraphs, supports newlines), `theme` (text, not null, default `'LIGHT'`), `border_style` (text, nullable — null means use theme default)
-- [ ] **2.5a** Changeset: ad settings columns on `gallery` table — `ads_enabled` (boolean, not null, default false), `ad_landing_banner` (boolean, not null, default false), `ad_landing_banner_slot` (text, nullable), `ad_image_detail_sidebar` (boolean, not null, default false), `ad_image_detail_sidebar_slot` (text, nullable)
-- [ ] **2.5b** Changeset: `gallery_bio_link` table — `id` (bigserial PK), `gallery_id` (bigint FK to gallery, not null), `label` (text, not null), `url` (text, not null), `sort_order` (int, not null)
-- [ ] **2.5c** Changeset: `gallery_image` join table — `gallery_id` (FK to gallery), `image_id` (FK to image), composite PK. Scopes images to galleries — an image can belong to multiple galleries but tours only see images associated with their gallery.
-- [ ] **2.6** Changeset: `tour` table — `id` (bigserial PK), `public_id` (UUID, unique), `name` (text, not null), `description` (text, nullable), `gallery_id` (bigint FK to gallery, not null), `headliner_image_id` (bigint FK to image, nullable), `sort_order` (int, not null, default 0)
-- [ ] **2.7** Changeset: `tour_image` join table — `tour_id` (FK), `image_id` (FK), `sort_order` (int, not null), composite PK on (tour_id, image_id)
-- [ ] **2.7a** Changeset: `tour_tag` join table — `tour_id` (FK to tour), `tag_id` (FK to tag), composite PK. Records which tags a tour is associated with for auto-sync purposes.
-- [ ] **2.8** Changeset: `thumbnail` table — `image_id` (bigint FK to image, PK), `data` (bytea, not null — JPEG binary, max 100x100px preserving aspect ratio)
-- [ ] **2.8a** Changeset: `image_redirect` table — `old_short_id` (text, PK — the short ID of the deleted image), `new_short_id` (text, not null — the substitute short ID, may be `"00000000"` for "image not available")
-- [ ] **2.8b** Changeset: `page_view_daily` table — `id` (bigserial PK), `view_date` (date, not null), `entity_type` (text, not null — `'GALLERY'`, `'TOUR'`, or `'IMAGE'`), `entity_id` (bigint, not null — **no FK constraint**, just a plain bigint referencing the entity), `context` (text, not null — `'DIRECT'` or `'TOUR'`), `view_count` (int, not null, default 0). Unique constraint on `(view_date, entity_type, entity_id, context)`. Index on `(entity_type, entity_id, view_date)` for date-range queries. **No ON DELETE cascade** — when an entity is deleted, its historical view stats rows are kept as orphaned data. Stats queries must LEFT JOIN against the entity tables and filter out or label rows where the entity no longer exists.
-- [ ] **2.8c** Changeset: `async_job` table — `id` (UUID PK), `type` (text, not null — e.g. `'REGEN_ALL_THUMBNAILS'`), `status` (text, not null — `'RUNNING'`, `'COMPLETED'`, `'FAILED'`), `total_items` (int), `processed_items` (int, default 0), `failed_items` (int, default 0), `error_messages` (text, nullable — JSON array of per-item errors), `started_at` (timestamptz, not null), `completed_at` (timestamptz, nullable). Used for tracking async bulk operations.
-- [ ] **2.9** Changeset: `admin_config` table — `id` (bigserial PK), `password_hash` (text, not null) — single row for the admin password
-- [ ] **2.10** Add indexes: `image.public_id`, `image.short_id`, `gallery.public_id`, `gallery.code`, `tour.public_id`, `gallery.is_default`, `gallery.sort_order`, `tour.sort_order`
-- [ ] **2.11** Verify: app starts, Liquibase runs migrations against Dockerized PostgreSQL, schema matches design
+- [x] **2.1** Create Liquibase master changelog (`db/changelog/db.changelog-master.xml`)
+- [x] **2.2** Changeset: `image` table — `id` (bigserial PK), `public_id` (UUID, unique, not null), `short_id` (text, unique, not null — randomly generated zero-padded 8-digit number, e.g. "00004719", immutable after creation), `url` (text, not null), `title` (text), `artist_name` (text), `description` (text), `art_creation_date` (text, nullable — freeform: "1975", "1972-1974", etc.), `artist_comments` (text, nullable), `notes` (text, nullable), `admin_notes` (text, nullable — visible only in admin panel, never exposed to visitors), `nsfw` (boolean, not null, default false), `uploaded_at` (timestamptz, not null, default `now()` — auto-set on creation, admin-only), `base_image_id` (bigint FK self-ref, nullable)
+- [x] **2.3** Changeset: `tag` table — `id` (bigserial PK), `public_id` (UUID, unique), `name` (text, unique, not null)
+- [x] **2.4** Changeset: `image_tag` join table — `image_id` (FK), `tag_id` (FK), composite PK
+- [x] **2.5** Changeset: `gallery` table — `id` (bigserial PK), `public_id` (UUID, unique), `code` (text, unique, not null — 1-5 chars, regex `^[A-Z][A-Z0-9]{0,4}$`), `name` (text, not null), `subtitle` (text, nullable — e.g., artist name), `description` (text), `headliner_image_id` (bigint FK to image, nullable), `is_default` (boolean, default false), `visible` (boolean, not null, default true), `show_all_images_tour` (boolean, not null, default true), `sort_order` (int, not null, default 0), `bio_photo_url` (text, nullable — URL of artist photo), `bio_text` (text, nullable — biographical paragraphs, supports newlines), `theme` (text, not null, default `'LIGHT'`), `border_style` (text, nullable — null means use theme default)
+- [x] **2.5a** Changeset: ad settings columns on `gallery` table — `ads_enabled` (boolean, not null, default false), `ad_landing_banner` (boolean, not null, default false), `ad_landing_banner_slot` (text, nullable), `ad_image_detail_sidebar` (boolean, not null, default false), `ad_image_detail_sidebar_slot` (text, nullable)
+- [x] **2.5b** Changeset: `gallery_bio_link` table — `id` (bigserial PK), `gallery_id` (bigint FK to gallery, not null), `label` (text, not null), `url` (text, not null), `sort_order` (int, not null)
+- [x] **2.5c** Changeset: `gallery_image` join table — `gallery_id` (FK to gallery), `image_id` (FK to image), composite PK. Scopes images to galleries — an image can belong to multiple galleries but tours only see images associated with their gallery.
+- [x] **2.6** Changeset: `tour` table — `id` (bigserial PK), `public_id` (UUID, unique), `name` (text, not null), `description` (text, nullable), `gallery_id` (bigint FK to gallery, not null), `headliner_image_id` (bigint FK to image, nullable), `sort_order` (int, not null, default 0)
+- [x] **2.7** Changeset: `tour_image` join table — `tour_id` (FK), `image_id` (FK), `sort_order` (int, not null), composite PK on (tour_id, image_id)
+- [x] **2.7a** Changeset: `tour_tag` join table — `tour_id` (FK to tour), `tag_id` (FK to tag), composite PK. Records which tags a tour is associated with for auto-sync purposes.
+- [x] **2.8** Changeset: `thumbnail` table — `image_id` (bigint FK to image, PK), `data` (bytea, not null — JPEG binary, max 100x100px preserving aspect ratio)
+- [x] **2.8a** Changeset: `image_redirect` table — `old_short_id` (text, PK — the short ID of the deleted image), `new_short_id` (text, not null — the substitute short ID, may be `"00000000"` for "image not available")
+- [x] **2.8b** Changeset: `page_view_daily` table — `id` (bigserial PK), `view_date` (date, not null), `entity_type` (text, not null — `'GALLERY'`, `'TOUR'`, or `'IMAGE'`), `entity_id` (bigint, not null — **no FK constraint**, just a plain bigint referencing the entity), `context` (text, not null — `'DIRECT'` or `'TOUR'`), `view_count` (int, not null, default 0). Unique constraint on `(view_date, entity_type, entity_id, context)`. Index on `(entity_type, entity_id, view_date)` for date-range queries. **No ON DELETE cascade** — when an entity is deleted, its historical view stats rows are kept as orphaned data. Stats queries must LEFT JOIN against the entity tables and filter out or label rows where the entity no longer exists.
+- [x] **2.8c** Changeset: `async_job` table — `id` (UUID PK), `type` (text, not null — e.g. `'REGEN_ALL_THUMBNAILS'`), `status` (text, not null — `'RUNNING'`, `'COMPLETED'`, `'FAILED'`), `total_items` (int), `processed_items` (int, default 0), `failed_items` (int, default 0), `error_messages` (text, nullable — JSON array of per-item errors), `started_at` (timestamptz, not null), `completed_at` (timestamptz, nullable). Used for tracking async bulk operations.
+- [x] **2.9** Changeset: `admin_config` table — `id` (bigserial PK), `password_hash` (text, not null) — single row for the admin password
+- [x] **2.10** Add indexes: `image.public_id`, `image.short_id`, `gallery.public_id`, `gallery.code`, `tour.public_id`, `gallery.is_default`, `gallery.sort_order`, `tour.sort_order`
+- [x] **2.11** Verify: app starts, Liquibase runs migrations against Dockerized PostgreSQL, schema matches design
 
 **Milestone**: Database schema fully defined and versioned. App starts cleanly with empty tables.
 
@@ -54,25 +54,25 @@ Define all tables via Liquibase XML changesets. No application code yet — just
 
 Map the schema to Java, establish the data access layer.
 
-- [ ] **3.1** `Image` entity with self-referential `@ManyToOne` for `baseImage`, immutable `shortId` field (randomly generated zero-padded 8-digit string via `@PrePersist` — generate random number 0–99999999, zero-pad, retry on collision), `adminNotes` field (String, nullable), `nsfw` field (boolean, default false), `uploadedAt` (Instant, auto-set via `@CreationTimestamp`, admin-only), `url` (String, mutable — can be updated by admin)
-- [ ] **3.2** `Tag` entity
-- [ ] **3.3** `Image` ↔ `Tag` many-to-many mapping
-- [ ] **3.4** `Gallery` entity with `code` (unique, validated: 1-5 chars, `^[A-Z][A-Z0-9]{0,4}$`), `subtitle` (String, nullable), `visible` (boolean), `showAllImagesTour` (boolean), `sortOrder` (int), `bioPhotoUrl` (String, nullable), `bioText` (String, nullable), `@OneToMany` to `GalleryBioLink` (ordered list), `@ManyToOne` to `Image` (headliner), `@Enumerated(STRING)` for `theme` field
-- [ ] **3.4a** `GalleryTheme` enum: `LIGHT`, `DARK`, `PASTEL`, `SPRING`, `WINTER`, `CYBERPUNK`, `SUNSET`, `OCEAN`, `MONOCHROME`
-- [ ] **3.4b** `BorderStyle` enum: `THEME_DEFAULT`, `NONE`, `THIN_LINE`, `DOUBLE_LINE`, `SHADOW`, `ROUNDED`, `ORNATE_FRAME`, `POLAROID` — nullable on Gallery entity (null = THEME_DEFAULT)
-- [ ] **3.4c** Ad settings fields on `Gallery` entity: `adsEnabled` (boolean), `adLandingBanner` (boolean), `adLandingBannerSlot` (String, nullable), `adImageDetailSidebar` (boolean), `adImageDetailSidebarSlot` (String, nullable)
-- [ ] **3.4d** `GalleryBioLink` entity — `id`, `gallery` (`@ManyToOne`), `label` (String), `url` (String), `sortOrder` (int)
-- [ ] **3.4e** `GalleryImage` — `Gallery` ↔ `Image` many-to-many via `gallery_image` table. Scopes which images belong to which galleries.
-- [ ] **3.5** `Tour` entity with `@ManyToOne` to `Gallery`, `@ManyToOne` to `Image` (headliner), `description` (String, nullable), `sortOrder` (int), `@ManyToMany` to `Tag` (via `tour_tag` join table — tags associated with this tour for auto-sync)
-- [ ] **3.5a** `TourTag` mapping: `Tour` ↔ `Tag` many-to-many via `tour_tag` table. When tags are associated with a tour, any image with a matching tag is automatically included in the tour.
-- [ ] **3.6** `TourImage` entity (or `@OrderColumn` on Tour's image list) capturing sort order
-- [ ] **3.7** `Thumbnail` entity — PK is `imageId`, `data` (byte[], `@Lob`)
-- [ ] **3.7a** `ImageRedirect` entity — `oldShortId` (String, PK), `newShortId` (String, not null)
-- [ ] **3.7b** `PageViewDaily` entity — `id` (Long), `viewDate` (LocalDate), `entityType` (String/enum), `entityId` (Long), `context` (String/enum: `DIRECT`, `TOUR`), `viewCount` (int). Repository with UPSERT-style method: increment `viewCount` by 1 for a given `(viewDate, entityType, entityId, context)`, inserting a new row if none exists.
-- [ ] **3.7c** `AsyncJob` entity — `id` (UUID), `type` (String), `status` (enum: `RUNNING`, `COMPLETED`, `FAILED`), `totalItems` (Integer), `processedItems` (int), `failedItems` (int), `errorMessages` (String, nullable — JSON), `startedAt` (Instant), `completedAt` (Instant, nullable).
-- [ ] **3.8** `AdminConfig` entity
-- [ ] **3.9** Spring Data JPA repositories for each entity. `ImageRepository` includes: paginated `findAll` with sorting, text search across title/artistName/description, filtering by tag and NSFW flag, `findOrphans()` — images with no `gallery_image` rows.
-- [ ] **3.10** Verify: unit tests with H2 (`MODE=PostgreSQL`) — CRUD operations on all entities, relationship integrity, gallery-image scoping, orphan detection query
+- [x] **3.1** `Image` entity with self-referential `@ManyToOne` for `baseImage`, immutable `shortId` field (randomly generated zero-padded 8-digit string via `@PrePersist` — generate random number 0–99999999, zero-pad, retry on collision), `adminNotes` field (String, nullable), `nsfw` field (boolean, default false), `uploadedAt` (Instant, auto-set via `@CreationTimestamp`, admin-only), `url` (String, mutable — can be updated by admin)
+- [x] **3.2** `Tag` entity
+- [x] **3.3** `Image` ↔ `Tag` many-to-many mapping
+- [x] **3.4** `Gallery` entity with `code` (unique, validated: 1-5 chars, `^[A-Z][A-Z0-9]{0,4}$`), `subtitle` (String, nullable), `visible` (boolean), `showAllImagesTour` (boolean), `sortOrder` (int), `bioPhotoUrl` (String, nullable), `bioText` (String, nullable), `@OneToMany` to `GalleryBioLink` (ordered list), `@ManyToOne` to `Image` (headliner), `@Enumerated(STRING)` for `theme` field
+- [x] **3.4a** `GalleryTheme` enum: `LIGHT`, `DARK`, `PASTEL`, `SPRING`, `WINTER`, `CYBERPUNK`, `SUNSET`, `OCEAN`, `MONOCHROME`
+- [x] **3.4b** `BorderStyle` enum: `THEME_DEFAULT`, `NONE`, `THIN_LINE`, `DOUBLE_LINE`, `SHADOW`, `ROUNDED`, `ORNATE_FRAME`, `POLAROID` — nullable on Gallery entity (null = THEME_DEFAULT)
+- [x] **3.4c** Ad settings fields on `Gallery` entity: `adsEnabled` (boolean), `adLandingBanner` (boolean), `adLandingBannerSlot` (String, nullable), `adImageDetailSidebar` (boolean), `adImageDetailSidebarSlot` (String, nullable)
+- [x] **3.4d** `GalleryBioLink` entity — `id`, `gallery` (`@ManyToOne`), `label` (String), `url` (String), `sortOrder` (int)
+- [x] **3.4e** `GalleryImage` — `Gallery` ↔ `Image` many-to-many via `gallery_image` table. Scopes which images belong to which galleries.
+- [x] **3.5** `Tour` entity with `@ManyToOne` to `Gallery`, `@ManyToOne` to `Image` (headliner), `description` (String, nullable), `sortOrder` (int), `@ManyToMany` to `Tag` (via `tour_tag` join table — tags associated with this tour for auto-sync)
+- [x] **3.5a** `TourTag` mapping: `Tour` ↔ `Tag` many-to-many via `tour_tag` table. When tags are associated with a tour, any image with a matching tag is automatically included in the tour.
+- [x] **3.6** `TourImage` entity (or `@OrderColumn` on Tour's image list) capturing sort order
+- [x] **3.7** `Thumbnail` entity — PK is `imageId`, `data` (byte[], `@Lob`)
+- [x] **3.7a** `ImageRedirect` entity — `oldShortId` (String, PK), `newShortId` (String, not null)
+- [x] **3.7b** `PageViewDaily` entity — `id` (Long), `viewDate` (LocalDate), `entityType` (String/enum), `entityId` (Long), `context` (String/enum: `DIRECT`, `TOUR`), `viewCount` (int). Repository with UPSERT-style method: increment `viewCount` by 1 for a given `(viewDate, entityType, entityId, context)`, inserting a new row if none exists.
+- [x] **3.7c** `AsyncJob` entity — `id` (UUID), `type` (String), `status` (enum: `RUNNING`, `COMPLETED`, `FAILED`), `totalItems` (Integer), `processedItems` (int), `failedItems` (int), `errorMessages` (String, nullable — JSON), `startedAt` (Instant), `completedAt` (Instant, nullable).
+- [x] **3.8** `AdminConfig` entity
+- [x] **3.9** Spring Data JPA repositories for each entity. `ImageRepository` includes: paginated `findAll` with sorting, text search across title/artistName/description, filtering by tag and NSFW flag, `findOrphans()` — images with no `gallery_image` rows.
+- [x] **3.10** Verify: unit tests with H2 (`MODE=PostgreSQL`) — CRUD operations on all entities, relationship integrity, gallery-image scoping, orphan detection query
 
 **Milestone**: Full data access layer with passing tests.
 
@@ -82,13 +82,13 @@ Map the schema to Java, establish the data access layer.
 
 Define the API contract (request/response shapes) and compile-time mapping.
 
-- [ ] **4.1** DTOs for Image: `ImageResponse` (all fields including shortId, artCreationDate, artistComments, notes, adminNotes, nsfw, uploadedAt, url, `thumbnailUrl` — always `/api/v1/public/thumbnails/{shortId}`, galleryPublicIds list), `PublicImageResponse` (same but WITHOUT adminNotes, uploadedAt, galleryPublicIds — used by public API; includes `nsfw` flag so frontend can handle display), `ImageCreateRequest` (url, optional `galleryPublicId` — if provided, image is immediately associated with that gallery), `ImageUpdateRequest` (url, title, artistName, description, artCreationDate, artistComments, notes, adminNotes, nsfw, baseImagePublicId — changing `url` triggers thumbnail regeneration), `ImageBulkLoadRequest` (list of URLs, required `galleryPublicId`), `ImageBulkLoadResponse` (list of results per URL: success with imagePublicId, or failure with error message; `aborted` boolean + reason if first-3 rule triggered), `ImageUsageResponse` (list of `{ galleryPublicId, galleryName, galleryCode, tours: [{ tourPublicId, tourName }] }`)
-- [ ] **4.1a** `BulkMetadataUpdateRequest` — list of `{ imagePublicId, title?, artistName?, description?, artCreationDate?, artistComments?, notes?, adminNotes?, nsfw? }` for batch updates. `BulkMetadataUpdateResponse` — list of per-image `{ imagePublicId, success, error? }`.
-- [ ] **4.2** DTOs for Tag: `TagResponse` (includes publicId, name, imageCount), `TagCreateRequest` (name)
-- [ ] **4.3** DTOs for Gallery: `GalleryResponse` (includes `code`, `subtitle`, `visible`, `showAllImagesTour`, `sortOrder`, `bioPhotoUrl`, `bioText`, `bioLinks` list, `theme`, `borderStyle`, ad settings), `GalleryCreateRequest` (requires `code`, includes optional `subtitle`, `visible` defaults to true, `showAllImagesTour` defaults to true, optional `sortOrder`, optional `bioPhotoUrl`, `bioText`, `bioLinks`, optional `theme` defaults to LIGHT, optional `borderStyle`, optional ad settings all defaulting to false), `GalleryUpdateRequest` (includes optional `code`, `subtitle`, `visible`, `showAllImagesTour`, `sortOrder`, `bioPhotoUrl`, `bioText`, `bioLinks`, `theme`, `borderStyle`, ad settings)
-- [ ] **4.3a** `GET /api/v1/public/themes` response DTO: list of available themes with display names
-- [ ] **4.3b** `BioLinkDto` — `label` (String), `url` (String)
-- [ ] **4.3c** Gallery export/import DTOs. `GalleryExportDto`:
+- [x] **4.1** DTOs for Image: `ImageResponse` (all fields including shortId, artCreationDate, artistComments, notes, adminNotes, nsfw, uploadedAt, url, `thumbnailUrl` — always `/api/v1/public/thumbnails/{shortId}`, galleryPublicIds list), `PublicImageResponse` (same but WITHOUT adminNotes, uploadedAt, galleryPublicIds — used by public API; includes `nsfw` flag so frontend can handle display), `ImageCreateRequest` (url, optional `galleryPublicId` — if provided, image is immediately associated with that gallery), `ImageUpdateRequest` (url, title, artistName, description, artCreationDate, artistComments, notes, adminNotes, nsfw, baseImagePublicId — changing `url` triggers thumbnail regeneration), `ImageBulkLoadRequest` (list of URLs, required `galleryPublicId`), `ImageBulkLoadResponse` (list of results per URL: success with imagePublicId, or failure with error message; `aborted` boolean + reason if first-3 rule triggered), `ImageUsageResponse` (list of `{ galleryPublicId, galleryName, galleryCode, tours: [{ tourPublicId, tourName }] }`)
+- [x] **4.1a** `BulkMetadataUpdateRequest` — list of `{ imagePublicId, title?, artistName?, description?, artCreationDate?, artistComments?, notes?, adminNotes?, nsfw? }` for batch updates. `BulkMetadataUpdateResponse` — list of per-image `{ imagePublicId, success, error? }`.
+- [x] **4.2** DTOs for Tag: `TagResponse` (includes publicId, name, imageCount), `TagCreateRequest` (name)
+- [x] **4.3** DTOs for Gallery: `GalleryResponse` (includes `code`, `subtitle`, `visible`, `showAllImagesTour`, `sortOrder`, `bioPhotoUrl`, `bioText`, `bioLinks` list, `theme`, `borderStyle`, ad settings), `GalleryCreateRequest` (requires `code`, includes optional `subtitle`, `visible` defaults to true, `showAllImagesTour` defaults to true, optional `sortOrder`, optional `bioPhotoUrl`, `bioText`, `bioLinks`, optional `theme` defaults to LIGHT, optional `borderStyle`, optional ad settings all defaulting to false), `GalleryUpdateRequest` (includes optional `code`, `subtitle`, `visible`, `showAllImagesTour`, `sortOrder`, `bioPhotoUrl`, `bioText`, `bioLinks`, `theme`, `borderStyle`, ad settings)
+- [x] **4.3a** `GET /api/v1/public/themes` response DTO: list of available themes with display names
+- [x] **4.3b** `BioLinkDto` — `label` (String), `url` (String)
+- [x] **4.3c** Gallery export/import DTOs. `GalleryExportDto`:
   ```json
   {
     "formatVersion": 1,
@@ -126,12 +126,12 @@ Define the API contract (request/response shapes) and compile-time mapping.
   }
   ```
   `GalleryImportRequest`: the export DTO above + a required `code` field (the new gallery code). `GalleryImportResponse`: the created gallery response + `warnings` list (e.g., `"Image 00138572 not found — skipped"`).
-- [ ] **4.4** DTOs for Tour: `TourResponse` (includes description, sortOrder, list of associated tag public IDs), `TourCreateRequest` (name, description, headlinerImagePublicId, ordered imagePublicIds list, optional sortOrder, optional list of tag public IDs — images matching those tags are auto-added), `TourUpdateRequest` (name, description, headlinerImagePublicId, imagePublicIds list with order, sortOrder, tag public IDs)
-- [ ] **4.4a** DTOs for View Stats: `ViewTrackingRequest` (`type`: GALLERY/TOUR/IMAGE, `code`, optional `tourPublicId`, optional `imageShortId`, optional `context`: DIRECT/TOUR), `ViewStatsResponse` (entity name/code/shortId, total views, direct views, tour views, daily breakdown list), `DailyViewCount` (date, count)
-- [ ] **4.5** DTOs for Auth: `LoginRequest` (password), `LoginResponse` (token), `PasswordChangeRequest` (currentPassword, newPassword — newPassword must be >= 8 characters)
-- [ ] **4.5a** `AsyncJobResponse` — `jobId` (UUID), `type`, `status`, `totalItems`, `processedItems`, `failedItems`, `errorMessages` (list of strings), `startedAt`, `completedAt`
-- [ ] **4.6** MapStruct mappers: Entity ↔ DTO, mapping `publicId` (not `id`), resolving FK references by public_id
-- [ ] **4.7** Verify: mapper unit tests — round-trip mapping correctness
+- [x] **4.4** DTOs for Tour: `TourResponse` (includes description, sortOrder, list of associated tag public IDs), `TourCreateRequest` (name, description, headlinerImagePublicId, ordered imagePublicIds list, optional sortOrder, optional list of tag public IDs — images matching those tags are auto-added), `TourUpdateRequest` (name, description, headlinerImagePublicId, imagePublicIds list with order, sortOrder, tag public IDs)
+- [x] **4.4a** DTOs for View Stats: `ViewTrackingRequest` (`type`: GALLERY/TOUR/IMAGE, `code`, optional `tourPublicId`, optional `imageShortId`, optional `context`: DIRECT/TOUR), `ViewStatsResponse` (entity name/code/shortId, total views, direct views, tour views, daily breakdown list), `DailyViewCount` (date, count)
+- [x] **4.5** DTOs for Auth: `LoginRequest` (password), `LoginResponse` (token), `PasswordChangeRequest` (currentPassword, newPassword — newPassword must be >= 8 characters)
+- [x] **4.5a** `AsyncJobResponse` — `jobId` (UUID), `type`, `status`, `totalItems`, `processedItems`, `failedItems`, `errorMessages` (list of strings), `startedAt`, `completedAt`
+- [x] **4.6** MapStruct mappers: Entity ↔ DTO, mapping `publicId` (not `id`), resolving FK references by public_id
+- [x] **4.7** Verify: mapper unit tests — round-trip mapping correctness
 
 **Milestone**: Clean API contract defined. Mappers compile and pass tests.
 
@@ -139,16 +139,16 @@ Define the API contract (request/response shapes) and compile-time mapping.
 
 ## Phase 5: Authentication & Security
 
-- [ ] **5.1** JWT utility class: generate token (24-hour expiration), validate token, extract claims (using JJWT). No refresh tokens — when the token expires, the admin re-authenticates. The frontend detects 401 responses and redirects to the login page.
-- [ ] **5.2** `AuthService`: verify password against bcrypt hash in `admin_config` table, change password (verify current, validate new >= 8 chars, store new bcrypt hash)
-- [ ] **5.3** `AuthController`:
+- [x] **5.1** JWT utility class: generate token (24-hour expiration), validate token, extract claims (using JJWT). No refresh tokens — when the token expires, the admin re-authenticates. The frontend detects 401 responses and redirects to the login page.
+- [x] **5.2** `AuthService`: verify password against bcrypt hash in `admin_config` table, change password (verify current, validate new >= 8 chars, store new bcrypt hash)
+- [x] **5.3** `AuthController`:
   - `POST /api/v1/auth/login` — accepts password, returns JWT
   - `PUT /api/v1/admin/password` — change admin password (requires current password + new password, minimum 8 characters)
-- [ ] **5.4** `JwtAuthenticationFilter` (extends `OncePerRequestFilter`): extract token from `Authorization: Bearer` header, validate, set SecurityContext
-- [ ] **5.5** `SecurityConfig`: permit all on public endpoints (`/api/v1/public/**`, `/`, static resources), require auth on `/api/v1/admin/**`
-- [ ] **5.6** Seed data: Liquibase changeset (or `CommandLineRunner`) to insert initial admin password hash (bcrypt of `WorstPassword666!`)
-- [ ] **5.7** Rate limiting: apply per-IP rate limit to `POST /api/v1/public/views` (e.g., 60 requests/minute per IP using Bucket4j or Spring filter). Prevents stat inflation from abuse.
-- [ ] **5.8** Verify: integration tests — login succeeds/fails, password change (success, wrong current password, too-short new password), protected endpoints reject without token, accept with valid token, rate limiting on views endpoint
+- [x] **5.4** `JwtAuthenticationFilter` (extends `OncePerRequestFilter`): extract token from `Authorization: Bearer` header, validate, set SecurityContext
+- [x] **5.5** `SecurityConfig`: permit all on public endpoints (`/api/v1/public/**`, `/`, static resources), require auth on `/api/v1/admin/**`
+- [x] **5.6** Seed data: Liquibase changeset (or `CommandLineRunner`) to insert initial admin password hash (bcrypt of `WorstPassword666!`)
+- [x] **5.7** Rate limiting: apply per-IP rate limit to `POST /api/v1/public/views` (e.g., 60 requests/minute per IP using Bucket4j or Spring filter). Prevents stat inflation from abuse.
+- [x] **5.8** Verify: integration tests — login succeeds/fails, password change (success, wrong current password, too-short new password), protected endpoints reject without token, accept with valid token, rate limiting on views endpoint
 
 **Milestone**: Auth fully working. Admin endpoints are protected.
 
@@ -156,10 +156,10 @@ Define the API contract (request/response shapes) and compile-time mapping.
 
 ## Phase 6: Admin API — Images, Tags, Thumbnails
 
-- [ ] **6.1** `ImageService`: create (with optional gallery assignment), update metadata (including URL — triggers thumbnail regen), delete, get by publicId, list all (paginated, searchable, filterable, sortable), list orphans (images not in any gallery), bulk load (requires gallery), set/clear base image, get image usage (which galleries and tours reference an image)
-- [ ] **6.1a** `ThumbnailService`: generate thumbnail from image URL (fetch image, scale to fit 100x100px — scale up if smaller, preserve aspect ratio, encode as JPEG, store in `thumbnail` table). Called when an image is created, when its URL is updated, or when admin triggers manual regeneration. Uses a library like `java.awt.image` / Thumbnailator for resizing. Thumbnail is deleted when the image is deleted. **Error handling**: if the URL is unreachable or returns a non-image response, throw a descriptive exception (include HTTP status or connection error message). The caller decides how to handle it (see bulk load logic and regen-all logic).
-- [ ] **6.1b** Thumbnail in-memory cache: Caffeine cache keyed by image short ID, bounded size appropriate for 512MB heap (e.g., ~50-100MB max, LRU eviction). Cache is populated on read, invalidated when an image is deleted or thumbnail is regenerated.
-- [ ] **6.2** `AdminImageController` (`/api/v1/admin/images`):
+- [x] **6.1** `ImageService`: create (with optional gallery assignment), update metadata (including URL — triggers thumbnail regen), delete, get by publicId, list all (paginated, searchable, filterable, sortable), list orphans (images not in any gallery), bulk load (requires gallery), set/clear base image, get image usage (which galleries and tours reference an image)
+- [x] **6.1a** `ThumbnailService`: generate thumbnail from image URL (fetch image, scale to fit 100x100px — scale up if smaller, preserve aspect ratio, encode as JPEG, store in `thumbnail` table). Called when an image is created, when its URL is updated, or when admin triggers manual regeneration. Uses a library like `java.awt.image` / Thumbnailator for resizing. Thumbnail is deleted when the image is deleted. **Error handling**: if the URL is unreachable or returns a non-image response, throw a descriptive exception (include HTTP status or connection error message). The caller decides how to handle it (see bulk load logic and regen-all logic).
+- [x] **6.1b** Thumbnail in-memory cache: Caffeine cache keyed by image short ID, bounded size appropriate for 512MB heap (e.g., ~50-100MB max, LRU eviction). Cache is populated on read, invalidated when an image is deleted or thumbnail is regenerated.
+- [x] **6.2** `AdminImageController` (`/api/v1/admin/images`):
   - `POST /` — create single image (provide URL, optional `galleryPublicId`). If thumbnail generation fails, return 201 with a warning field (image created but thumbnail missing) and the error message.
   - `POST /bulk` — bulk load (list of URLs, required `galleryPublicId`). Processes sequentially. Each image: attempt create + thumbnail + gallery association. On thumbnail failure: image is still created and associated with the gallery, but flagged with a warning in the response. **Abort rule**: if the first 3 consecutive images all fail thumbnail generation, abort the entire bulk load and return the errors (likely a systemic issue like bad base URL). Response: `ImageBulkLoadResponse` with per-URL results and `aborted` flag.
   - `GET /` — list all images, **paginated** (`page`, `size`, default 20). Supports query params: `q` (text search across title, artist name, description), `tag` (filter by tag publicId), `nsfw` (boolean filter), `orphan` (boolean filter — if true, only images not in any gallery), `sort` (field name: `title`, `artistName`, `uploadedAt`, default `uploadedAt`), `dir` (`asc`/`desc`, default `desc`). Each result includes a thumbnail URL for display in the admin list.
@@ -173,15 +173,15 @@ Define the API contract (request/response shapes) and compile-time mapping.
   - `POST /regenerate-all-thumbnails` — regenerate thumbnails for all images. Creates an `AsyncJob` row, kicks off processing on a background thread (`@Async` — requires `@EnableAsync` on a Spring config class), returns `202 Accepted` with `{ jobId }`. The background thread iterates all images, regenerates each thumbnail, updates `processedItems`/`failedItems`/`errorMessages` on the `AsyncJob` row as it goes, and sets `status` to `COMPLETED` or `FAILED` when done.
   - `GET /jobs/{jobId}` — poll async job status. Returns `AsyncJobResponse`. The admin UI polls this every few seconds while status is `RUNNING`.
   - `DELETE /{publicId}?substituteShortId=XXXXXXXX` — delete image. Requires `substituteShortId` parameter (the short ID of the replacement image, or `00000000` for "image not available"). Creates an `image_redirect` entry mapping the deleted image's short ID to the substitute. If the deleted image is itself a redirect target, all existing redirects pointing to it are updated to point to the new substitute (one-hop rule). Validates no loops. Also removes the image from any tours, any gallery-image associations, and clears any headliner references.
-- [ ] **6.3** Image-tag operations on `AdminImageController`:
+- [x] **6.3** Image-tag operations on `AdminImageController`:
   - `POST /{publicId}/tags` — add tag to image. **Auto-sync**: after adding, find all tours associated with this tag (within galleries that contain the image) and add the image to them (appended at the end of tour order).
   - `DELETE /{publicId}/tags/{tagPublicId}` — remove tag from image. **Auto-sync**: after removing, find all tours associated with this tag and remove the image from them (only if the image has no other tags that the tour is also associated with).
-- [ ] **6.3a** `AdminTagController` (`/api/v1/admin/tags`) — tags are a top-level resource, not scoped to images:
+- [x] **6.3a** `AdminTagController` (`/api/v1/admin/tags`) — tags are a top-level resource, not scoped to images:
   - `GET /` — list all tags with image counts
   - `POST /` — create a new tag
   - `DELETE /{tagPublicId}` — delete a tag. Removes the tag from all images and all tour-tag associations. **Auto-sync**: for each tour that was associated with this tag, remove images that were only included via this tag (and have no other matching tour-tags).
-- [ ] **6.4** Validation: prevent circular base-image references, prevent redirect loops on deletion, validate substitute short ID exists (or is `00000000`)
-- [ ] **6.5** Verify: integration tests covering all endpoints, edge cases, error responses, pagination, search/filter, orphan filter, bulk load with gallery assignment, bulk load abort logic, thumbnail regeneration (single and all with async job polling), image URL update, image usage report, bulk metadata update
+- [x] **6.4** Validation: prevent circular base-image references, prevent redirect loops on deletion, validate substitute short ID exists (or is `00000000`)
+- [x] **6.5** Verify: integration tests covering all endpoints, edge cases, error responses, pagination, search/filter, orphan filter, bulk load with gallery assignment, bulk load abort logic, thumbnail regeneration (single and all with async job polling), image URL update, image usage report, bulk metadata update
 
 **Milestone**: Full image and tag management API with tests.
 
@@ -189,8 +189,8 @@ Define the API contract (request/response shapes) and compile-time mapping.
 
 ## Phase 7: Admin API — Galleries & Tours
 
-- [ ] **7.1** `GalleryService`: create, update, delete, set default, list all (ordered by `sortOrder`), reorder galleries, add/remove images to/from gallery, export, import
-- [ ] **7.2** `AdminGalleryController` (`/api/v1/admin/galleries`):
+- [x] **7.1** `GalleryService`: create, update, delete, set default, list all (ordered by `sortOrder`), reorder galleries, add/remove images to/from gallery, export, import
+- [x] **7.2** `AdminGalleryController` (`/api/v1/admin/galleries`):
   - `POST /` — create gallery
   - `GET /` — list all galleries (ordered by `sortOrder`)
   - `GET /{publicId}` — get gallery detail (includes image count and tour count)
@@ -202,23 +202,23 @@ Define the API contract (request/response shapes) and compile-time mapping.
   - `DELETE /{publicId}` — delete gallery (cascades tours, gallery-image associations)
   - `GET /{publicId}/export` — export gallery definition as JSON (`GalleryExportDto`). Does not include image metadata — images are referenced by short ID.
   - `POST /import` — import gallery from JSON. Requires `code` in the body (the new gallery code). Processing order: (1) create the gallery with settings from the JSON, (2) resolve `gallery.imageShortIds` — for each short ID found, create a `gallery_image` association; short IDs not found are skipped with a warning, (3) for each tour, resolve `imageShortIds` against the images that were successfully associated with the gallery — images not in the gallery are skipped with a warning, (4) resolve `tagNames` for tour-tag associations — tags not found are skipped with a warning, (5) set headliner images if their short IDs resolved. Returns the created gallery response + warnings list.
-- [ ] **7.3** `TourService`: create, update, delete, reorder images, reorder tours within a gallery. **Tag-based auto-population**: when creating a tour with associated tags, query all images matching those tags (scoped to the gallery via `gallery_image`) and add them as the initial image list (ordered by image PK). **Ongoing sync** logic (called from `ImageService` and tag endpoints): when a tag is added to an image, add the image to all tours associated with that tag (within galleries that contain the image); when a tag is removed from an image, remove it from tours where it was included only via that tag.
-- [ ] **7.4** `AdminTourController` (`/api/v1/admin/galleries/{galleryPublicId}/tours`):
+- [x] **7.3** `TourService`: create, update, delete, reorder images, reorder tours within a gallery. **Tag-based auto-population**: when creating a tour with associated tags, query all images matching those tags (scoped to the gallery via `gallery_image`) and add them as the initial image list (ordered by image PK). **Ongoing sync** logic (called from `ImageService` and tag endpoints): when a tag is added to an image, add the image to all tours associated with that tag (within galleries that contain the image); when a tag is removed from an image, remove it from tours where it was included only via that tag.
+- [x] **7.4** `AdminTourController` (`/api/v1/admin/galleries/{galleryPublicId}/tours`):
   - `POST /` — create tour (accepts name, description, optional list of tag public IDs for auto-population, optional sortOrder)
   - `GET /` — list tours in gallery (ordered by `sortOrder`)
   - `GET /{tourPublicId}` — get tour detail with ordered images and associated tags
   - `PUT /{tourPublicId}` — update tour (name, description, headlinerImagePublicId, imagePublicIds list with order, sortOrder, tag associations)
   - `PUT /reorder` — batch update sort orders for tours in this gallery
   - `DELETE /{tourPublicId}` — delete tour
-- [ ] **7.5** Default gallery constraint: at most one default — setting a new default clears the old one
-- [ ] **7.5a** "All Images" tour: a virtual tour (not stored in the `tour` table) dynamically generated by the public API. Contains all images associated with the gallery (via `gallery_image`) ordered by creation date (newest first). Included in a gallery's tour list only when `showAllImagesTour` is true. Uses a reserved `publicId` (e.g., `all-images`) that cannot be used by admin-created tours. Images in this tour are not manually reorderable.
-- [ ] **7.6** Gallery code validation: reject codes that don't match `^[A-Z][A-Z0-9]{0,4}$`, reject duplicate codes. (Note: reserved lowercase paths like `admin`, `api`, `galleries` can never collide because the regex requires all uppercase.)
-- [ ] **7.7** `ViewStatsService`: query `page_view_daily` for a date range, grouped by entity. Methods: top galleries by views, top tours by views (optionally filtered by gallery), top images by views (with direct-vs-tour breakdown). Returns sorted results with totals and daily trend data.
-- [ ] **7.8** `AdminStatsController` (`/api/v1/admin/stats`):
+- [x] **7.5** Default gallery constraint: at most one default — setting a new default clears the old one
+- [x] **7.5a** "All Images" tour: a virtual tour (not stored in the `tour` table) dynamically generated by the public API. Contains all images associated with the gallery (via `gallery_image`) ordered by creation date (newest first). Included in a gallery's tour list only when `showAllImagesTour` is true. Uses a reserved `publicId` (e.g., `all-images`) that cannot be used by admin-created tours. Images in this tour are not manually reorderable.
+- [x] **7.6** Gallery code validation: reject codes that don't match `^[A-Z][A-Z0-9]{0,4}$`, reject duplicate codes. (Note: reserved lowercase paths like `admin`, `api`, `galleries` can never collide because the regex requires all uppercase.)
+- [x] **7.7** `ViewStatsService`: query `page_view_daily` for a date range, grouped by entity. Methods: top galleries by views, top tours by views (optionally filtered by gallery), top images by views (with direct-vs-tour breakdown). Returns sorted results with totals and daily trend data.
+- [x] **7.8** `AdminStatsController` (`/api/v1/admin/stats`):
   - `GET /galleries?from=YYYY-MM-DD&to=YYYY-MM-DD` — gallery view counts for date range, sorted by total views descending
   - `GET /tours?from=YYYY-MM-DD&to=YYYY-MM-DD&galleryPublicId={optional}` — tour view counts, optionally filtered by gallery
   - `GET /images?from=YYYY-MM-DD&to=YYYY-MM-DD` — image view counts with direct/tour breakdown, sorted by total views descending
-- [ ] **7.9** Verify: integration tests — CRUD, default toggle, visibility toggle, cascade delete, sort ordering (galleries and tours), code uniqueness, code validation, gallery-image scoping (images not in gallery don't appear in its tours), export/import round-trip (including warnings for missing images and tags), **tag-tour sync**: create tour with tags (verify auto-populated images scoped to gallery), add tag to image (verify added to matching tours in galleries containing the image), remove tag from image (verify removed from tours only linked via that tag), delete tag (verify tours updated), delete image (verify removed from all tours and gallery associations), **view stats**: record views via public endpoint then query admin stats (verify counts, date range filtering, direct-vs-tour breakdown for images)
+- [x] **7.9** Verify: integration tests — CRUD, default toggle, visibility toggle, cascade delete, sort ordering (galleries and tours), code uniqueness, code validation, gallery-image scoping (images not in gallery don't appear in its tours), export/import round-trip (including warnings for missing images and tags), **tag-tour sync**: create tour with tags (verify auto-populated images scoped to gallery), add tag to image (verify added to matching tours in galleries containing the image), remove tag from image (verify removed from tours only linked via that tag), delete tag (verify tours updated), delete image (verify removed from all tours and gallery associations), **view stats**: record views via public endpoint then query admin stats (verify counts, date range filtering, direct-vs-tour breakdown for images)
 
 **Milestone**: Full gallery and tour management API with tests.
 

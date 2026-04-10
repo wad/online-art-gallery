@@ -1,0 +1,44 @@
+# Maven
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Node / npm
+frontend/node_modules/
+frontend/.node/
+frontend/dist/
+frontend/.vite/
+
+# Spring Boot
+*.log
+spring.log
+
+# Secrets / environment
+.env
+.env.local
+.env.*.local
+
+# Docker
+docker-compose.override.yml
+
+# OS
+Thumbs.db
+
+# Generated static resources (built by frontend module, not source)
+backend/src/main/resources/static/
+
+backend/target
